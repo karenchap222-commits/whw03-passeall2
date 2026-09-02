@@ -12,6 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
       - name: Install dependencies
         run: |
           sudo apt update
@@ -32,32 +33,34 @@ jobs:
             unzip \
             wget
 
+
       - name: Download OpenWrt
         run: |
           git clone --depth=1 --branch openwrt-24.10 https://github.com/openwrt/openwrt.git
 
-      - name: Add Passwall2
+
+      - name: Add Passwall2 feeds
         run: |
           cd openwrt
 
-          git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall.git package/passwall
+          git config --global http.version HTTP/1.1
 
-          git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
-
-      - name: Configure feeds
-        run: |
-          cd openwrt
+          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
+          echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
 
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+
 
       - name: Configure OpenWrt
         run: |
           cd openwrt
 
-          cat > .config <<'EOF'
+          cat > .config <<EOF
+
 CONFIG_TARGET_ipq40xx=y
 CONFIG_TARGET_ipq40xx_generic=y
+CONFIG_TARGET_DEVICE_ipq40xx_generic_DEVICE_linksys_whw03=y
 
 CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-ssl=y
@@ -74,16 +77,20 @@ CONFIG_PACKAGE_kmod-fs-ext4=y
 
 CONFIG_PACKAGE_curl=y
 CONFIG_PACKAGE_ca-certificates=y
+
 EOF
 
           make defconfig
+
 
       - name: Build firmware
         run: |
           cd openwrt
 
           make download -j4
+
           make -j$(nproc) V=s
+
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
