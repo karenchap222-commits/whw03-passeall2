@@ -36,12 +36,12 @@ jobs:
           git clone --depth=1 --branch openwrt-24.10 https://github.com/openwrt/openwrt.git
 
       - name: Add Passwall2 feeds
-        run: |
-          cd openwrt
-          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
-          echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
+    run: |
+      cd openwrt
+      echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
+      echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
+      ./scripts/feeds update -a
+      ./scripts/feeds install -a
 - name: Configure OpenWrt
     run: |
       cd openwrt
