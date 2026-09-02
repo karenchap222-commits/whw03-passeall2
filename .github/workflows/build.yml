@@ -44,17 +44,16 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Configure OpenWrt
+     - name: Configure OpenWrt
         run: |
           cd openwrt
-          echo "CONFIG_TARGET_ipq40xx=y" > .config
-          echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
-          echo "CONFIG_PACKAGE_xray-core=y" >> .config
-          echo "CONFIG_PACKAGE_luci=y" >> .config
-          echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
+          echo 'CONFIG_TARGET_ipq40xx=y' > .config
+          echo 'CONFIG_TARGET_ipq40xx_generic=y' >> .config
+          echo 'CONFIG_PACKAGE_luci=y' >> .config
+          echo 'CONFIG_PACKAGE_luci-app-passwall2=y' >> .config
+          echo 'CONFIG_PACKAGE_xray-core=y' >> .config
           make defconfig
-
+          
       - name: Build firmware
         run: |
           cd openwrt
