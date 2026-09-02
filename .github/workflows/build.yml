@@ -8,8 +8,10 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
+
 
       - name: Install dependencies
         run: |
@@ -24,44 +26,57 @@ jobs:
             gcc-multilib \
             gettext \
             git \
-            libncurses5-dev \
+            libncurses-dev \
             libssl-dev \
             python3-setuptools \
             rsync \
             unzip \
             wget
 
+
       - name: Download OpenWrt
         run: |
-          git clone --depth=1 --branch openwrt-24.10 https://github.com/openwrt/openwrt.git
+          git clone --depth=1 --branch openwrt-25.12 https://github.com/openwrt/openwrt.git
+
 
       - name: Add Passwall2 feeds
         run: |
           cd openwrt
-          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
-          echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall2.git" >> feeds.conf.default
-          ./scripts/feeds update passwall_packages
-          ./scripts/feeds update passwall_luci
+
+          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> feeds.conf.default
+
+          ./scripts/feeds update -a
           ./scripts/feeds install -a
+
+
       - name: Configure OpenWrt
         run: |
           cd openwrt
+
           echo "CONFIG_TARGET_ipq40xx=y" > .config
           echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
+
           echo "CONFIG_PACKAGE_luci=y" >> .config
           echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
+
           echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
           echo "CONFIG_PACKAGE_xray-core=y" >> .config
+
           echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
           echo "CONFIG_PACKAGE_block-mount=y" >> .config
           echo "CONFIG_PACKAGE_kmod-fs-ext4=y" >> .config
+
           make defconfig
+
 
       - name: Build firmware
         run: |
           cd openwrt
+
           make download -j4
+
           make -j$(nproc) V=s
+
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
