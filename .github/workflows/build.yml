@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -38,8 +39,10 @@ jobs:
       - name: Add Passwall2 feeds
         run: |
           cd openwrt
+
           echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
           echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
+
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
@@ -47,28 +50,30 @@ jobs:
         run: |
           cd openwrt
 
-          cat > .config <<EOF
-CONFIG_TARGET_ipq40xx=y
-CONFIG_TARGET_ipq40xx_generic=y
-CONFIG_TARGET_DEVICE_ipq40xx_generic_DEVICE_linksys_whw03=y
+          echo "CONFIG_TARGET_ipq40xx=y" > .config
+          echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
 
-CONFIG_PACKAGE_luci=y
-CONFIG_PACKAGE_luci-ssl=y
-CONFIG_PACKAGE_luci-app-passwall2=y
-CONFIG_PACKAGE_xray-core=y
+          echo "CONFIG_PACKAGE_luci=y" >> .config
+          echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
 
-CONFIG_PACKAGE_kmod-usb-storage=y
-CONFIG_PACKAGE_block-mount=y
-CONFIG_PACKAGE_kmod-fs-ext4=y
+          echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
 
-EOF
+          echo "CONFIG_PACKAGE_xray-core=y" >> .config
+          echo "CONFIG_PACKAGE_sing-box=y" >> .config
+          echo "CONFIG_PACKAGE_tcping=y" >> .config
+
+          echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
+          echo "CONFIG_PACKAGE_block-mount=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-fs-ext4=y" >> .config
 
           make defconfig
 
       - name: Build firmware
         run: |
           cd openwrt
+
           make download -j4
+
           make -j$(nproc) V=s
 
       - name: Upload firmware
