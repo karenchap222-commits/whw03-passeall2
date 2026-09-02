@@ -1,4 +1,4 @@
-name: Build OpenWrt Passwall2 WHW03
+name: Build OpenWrt Passwall2 WHW03 v2
 
 on:
   workflow_dispatch:
@@ -11,7 +11,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-
 
       - name: Install dependencies
         run: |
@@ -33,13 +32,9 @@ jobs:
             unzip \
             wget
 
-
       - name: Download OpenWrt
         run: |
-          git clone --depth=1 https://github.com/openwrt/openwrt.git
-          cd openwrt
-          git checkout openwrt-25.12
-
+          git clone --depth=1 --branch openwrt-24.10 https://github.com/openwrt/openwrt.git
 
       - name: Add Passwall2 feeds
         run: |
@@ -54,13 +49,13 @@ jobs:
           ./scripts/feeds install -a -p passwall_packages
           ./scripts/feeds install -a -p passwall_luci
 
-
       - name: Configure OpenWrt
         run: |
           cd openwrt
 
           echo "CONFIG_TARGET_ipq40xx=y" > .config
           echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
+          echo "CONFIG_TARGET_DEVICE_ipq40xx_generic_DEVICE_linksys_whw03=y" >> .config
 
           echo "CONFIG_PACKAGE_luci=y" >> .config
           echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
@@ -80,18 +75,14 @@ jobs:
 
           make defconfig
 
-
       - name: Build firmware
         run: |
           cd openwrt
-
           make download -j4
-
           make -j$(nproc) V=s
-
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: OpenWrt-Passwall2-WHW03
+          name: OpenWrt-Passwall2-WHW03-v2
           path: openwrt/bin/targets/ipq40xx/generic/
