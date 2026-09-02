@@ -11,6 +11,64 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Test
+      - name: Install dependencies
         run: |
-          echo "YAML OK"
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            clang \
+            flex \
+            bison \
+            g++ \
+            gawk \
+            gcc-multilib \
+            gettext \
+            git \
+            libncurses5-dev \
+            libssl-dev \
+            python3-setuptools \
+            rsync \
+            unzip \
+            wget
+
+      - name: Download OpenWrt
+        run: |
+          git clone --depth=1 --branch openwrt-24.10 https://github.com/openwrt/openwrt.git
+
+      - name: Add Passwall2 feeds
+        run: |
+          cd openwrt
+          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
+          echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure OpenWrt
+        run: |
+          cd openwrt
+          cat > .config <<EOF
+CONFIG_TARGET_ipq40xx=y
+CONFIG_TARGET_ipq40xx_generic=y
+
+CONFIG_PACKAGE_luci-app-passwall2=y
+CONFIG_PACKAGE_xray-core=y
+CONFIG_PACKAGE_luci=y
+CONFIG_PACKAGE_luci-ssl=y
+
+CONFIG_PACKAGE_kmod-usb-storage=y
+CONFIG_PACKAGE_block-mount=y
+CONFIG_PACKAGE_kmod-fs-ext4=y
+EOF
+          make defconfig
+
+      - name: Build firmware
+        run: |
+          cd openwrt
+          make download -j4
+          make -j$(nproc) V=s
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenWrt-Passwall2-WHW03
+          path: openwrt/bin/targets/
