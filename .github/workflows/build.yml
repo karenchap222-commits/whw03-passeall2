@@ -29,16 +29,15 @@ jobs:
           ./scripts/feeds install -a
 
       - name: Configure
-        run: |
-          cd openwrt
-          cat > .config <<EOF
-CONFIG_TARGET_ipq40xx=y
-CONFIG_TARGET_ipq40xx_generic=y
-CONFIG_PACKAGE_luci-app-passwall2=y
-CONFIG_PACKAGE_xray-core=y
-CONFIG_PACKAGE_luci=y
-EOF
-          make defconfig
+    run: |
+      cd openwrt
+      echo "CONFIG_TARGET_ipq40xx=y" > .config
+      echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
+      echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
+      echo "CONFIG_PACKAGE_xray-core=y" >> .config
+      echo "CONFIG_PACKAGE_luci=y" >> .config
+      make defconfig
+
 
       - name: Build
         run: |
