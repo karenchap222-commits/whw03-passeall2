@@ -1,49 +1,141 @@
 name: Build OpenWrt Passwall2
 
 on:
+
   workflow_dispatch:
 
 jobs:
+
   build:
-    runs-on: ubuntu-latest
+
+    runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
+
         uses: actions/checkout@v4
 
       - name: Install dependencies
+
         run: |
+
           sudo apt update
-         sudo apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync unzip zstd
+
+          sudo apt install -y \
+
+            build-essential \
+
+            clang \
+
+            flex \
+
+            bison \
+
+            g++ \
+
+            gawk \
+
+            gcc-multilib \
+
+            gettext \
+
+            git \
+
+            libncurses5-dev \
+
+            libssl-dev \
+
+            python3-setuptools \
+
+            rsync \
+
+            unzip \
+
+            zstd \
+
+            wget
 
       - name: Clone OpenWrt
+
         run: |
+
           git clone --depth=1 --branch openwrt-25.12 https://github.com/openwrt/openwrt.git
 
       - name: Prepare feeds
+
         run: |
+
           cd openwrt
+
           ./scripts/feeds update -a
+
           ./scripts/feeds install -a
 
-      - name: Add Passwall2
+      - name: Add Passwall2 feeds
+
         run: |
+
           cd openwrt
-          git clone https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
-          git clone https://github.com/xiaorouji/openwrt-passwall.git package/passwall
-          ./scripts/feeds update -a
+
+          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
+
+          echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
+
+          ./scripts/feeds update passwall_packages
+
+          ./scripts/feeds update passwall_luci
+
           ./scripts/feeds install -a
 
       - name: Configure
+
         run: |
+
           cd openwrt
-          echo "CONFIG_TARGET_ipq40xx=y" > .config
-          echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
-          echo "CONFIG_PACKAGE_xray-core=y" >> .config
+
+          cat > .config <<EOF
+
+CONFIG_TARGET_ipq40xx=y
+
+CONFIG_TARGET_ipq40xx_generic=y
+
+CONFIG_TARGET_ipq40xx_generic_DEVICE_linksys_whw03=y
+
+CONFIG_PACKAGE_luci-app-passwall2=y
+
+CONFIG_PACKAGE_xray-core=y
+
+CONFIG_PACKAGE_ca-certificates=y
+
+CONFIG_PACKAGE_wget-ssl=y
+
+EOF
+
           make defconfig
 
-      - name: Build
+      - name: Download packages
+
         run: |
+
           cd openwrt
+
+          make download -j8
+
+      - name: Build firmware
+
+        run: |
+
+          cd openwrt
+
           make -j$(nproc) V=s
+
+      - name: Upload firmware
+
+        uses: actions/upload-artifact@v4
+
+        with:
+
+          name: OpenWrt-Passwall2-WHW03
+
+          path: openwrt/bin/targets/
