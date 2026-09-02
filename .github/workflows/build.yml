@@ -8,19 +8,35 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install packages
+      - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential clang flex bison g++ gawk gettext git libncurses-dev libssl-dev python3-setuptools rsync unzip wget
+          sudo apt install -y \
+            build-essential \
+            clang \
+            flex \
+            bison \
+            g++ \
+            gawk \
+            gcc-multilib \
+            gettext \
+            git \
+            libncurses5-dev \
+            libssl-dev \
+            python3-setuptools \
+            rsync \
+            unzip \
+            wget
 
-      - name: Download OpenWrt
+      - name: Clone OpenWrt
         run: |
           git clone --depth=1 --branch openwrt-25.12 https://github.com/openwrt/openwrt.git
 
-      - name: Add feeds
+      - name: Add Passwall2 feeds
         run: |
           cd openwrt
           echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git" >> feeds.conf.default
@@ -28,25 +44,25 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Configure
-    run: |
-      cd openwrt
-      echo "CONFIG_TARGET_ipq40xx=y" > .config
-      echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
-      echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
-      echo "CONFIG_PACKAGE_xray-core=y" >> .config
-      echo "CONFIG_PACKAGE_luci=y" >> .config
-      make defconfig
+      - name: Configure OpenWrt
+        run: |
+          cd openwrt
+          echo "CONFIG_TARGET_ipq40xx=y" > .config
+          echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
+          echo "CONFIG_PACKAGE_xray-core=y" >> .config
+          echo "CONFIG_PACKAGE_luci=y" >> .config
+          echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
+          make defconfig
 
-
-      - name: Build
+      - name: Build firmware
         run: |
           cd openwrt
           make download -j4
           make -j$(nproc) V=s
 
-      - name: Upload
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: openwrt-passwall2
-          path: openwrt/bin/
+          name: OpenWrt-Passwall2-WHW03
+          path: openwrt/bin/targets/
