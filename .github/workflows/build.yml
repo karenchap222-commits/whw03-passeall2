@@ -36,18 +36,16 @@ jobs:
         run: |
           git clone --depth=1 --branch openwrt-24.10 https://github.com/openwrt/openwrt.git
 
-      - name: Add Passwall2 feeds
+      - name: Add Passwall2
         run: |
           cd openwrt
 
-          echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> feeds.conf.default
-          echo "src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git;main" >> feeds.conf.default
+          git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall.git package/passwall
 
-          ./scripts/feeds update passwall_packages
-          ./scripts/feeds update passwall_luci
+          git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
 
-          ./scripts/feeds install -a -p passwall_packages
-          ./scripts/feeds install -a -p passwall_luci
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
 
       - name: Configure OpenWrt
         run: |
@@ -55,7 +53,6 @@ jobs:
 
           echo "CONFIG_TARGET_ipq40xx=y" > .config
           echo "CONFIG_TARGET_ipq40xx_generic=y" >> .config
-          echo "CONFIG_TARGET_DEVICE_ipq40xx_generic_DEVICE_linksys_whw03=y" >> .config
 
           echo "CONFIG_PACKAGE_luci=y" >> .config
           echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
@@ -78,7 +75,9 @@ jobs:
       - name: Build firmware
         run: |
           cd openwrt
+
           make download -j4
+
           make -j$(nproc) V=s
 
       - name: Upload firmware
